@@ -1,5 +1,8 @@
 #include "./headers/pcb.h"
 
+extern void klog_print(char *str);
+
+
 static struct list_head pcbFree_h; //sentinella -> inizio lista
 static pcb_t pcbFree_table[MAXPROC]; // array contenente i processi 
 static int next_pid = 1;
@@ -110,6 +113,7 @@ pcb_t* headProcQ(struct list_head* head) {
         return NULL;
   
     struct list_head* firstNode = list_next(head);
+    
     return container_of(firstNode,pcb_t,p_list);
 
     
@@ -128,7 +132,7 @@ pcb_t* removeProcQ(struct list_head* head) {
 /** rimuove il pcb puntato da p. Se esiste lo rimuove e ritorna il pcb altrimenti ritorna NULL */
 pcb_t* outProcQ(struct list_head* head, pcb_t* p) {
     
-    if(list_empty(head)) // controlliamo subito che la lista non sia vuota
+    if(list_empty(head)) // controlliamo subito che la lista non sia vuota(superfluo)
         return NULL;
     struct list_head* iter = list_next(head); //inizializziamo iter alla testa della lista
     list_for_each(iter,head){ 
@@ -137,10 +141,13 @@ pcb_t* outProcQ(struct list_head* head, pcb_t* p) {
             list_del(iter);
             return p;
         }
+        
     }
     return NULL;
 }
 
+
+/** Sezione Alberi */
 int emptyChild(pcb_t* p) {
 }
 
