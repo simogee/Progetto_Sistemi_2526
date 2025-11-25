@@ -106,7 +106,7 @@ void insertProcQ(struct list_head* head, pcb_t* p) {
 */
 pcb_t* headProcQ(struct list_head* head) {
 
-    if(list_empty(head))
+    if(list_empty(head)) 
         return NULL;
   
     struct list_head* firstNode = list_next(head);
@@ -127,6 +127,18 @@ pcb_t* removeProcQ(struct list_head* head) {
 }
 /** rimuove il pcb puntato da p. Se esiste lo rimuove e ritorna il pcb altrimenti ritorna NULL */
 pcb_t* outProcQ(struct list_head* head, pcb_t* p) {
+    
+    if(list_empty(head)) // controlliamo subito che la lista non sia vuota
+        return NULL;
+    struct list_head* iter = list_next(head); //inizializziamo iter alla testa della lista
+    list_for_each(iter,head){ 
+        pcb_t* qpcb = container_of(iter,pcb_t, p_list);
+        if(qpcb->p_pid == p->p_pid ){
+            list_del(iter);
+            return p;
+        }
+    }
+    return NULL;
 }
 
 int emptyChild(pcb_t* p) {
