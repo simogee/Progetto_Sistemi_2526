@@ -1,5 +1,7 @@
 #include "./headers/pcb.h"
 
+
+/** Si dichiara questo per poter utilizzare klog_print*/
 extern void klog_print(char *str);
 
 
@@ -22,7 +24,7 @@ void initPcbs() {
     }
  
 }
-
+ /** Funzione breakpoint */
 void bp(){
 }
 
