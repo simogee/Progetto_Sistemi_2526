@@ -1,0 +1,6 @@
+.vscode/
+CMakeLists.txt
+build/
+mio_debug.json
+config_machine.json
+term0.uriscv

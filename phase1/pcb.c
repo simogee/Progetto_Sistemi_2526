@@ -75,7 +75,7 @@ void mkEmptyProcQ(struct list_head* head) {
     INIT_LIST_HEAD(head);
 }
 /**Controlla se la coda è vuota */
-int emptyProcQ(struct list_head* head) {
+int emptyProcQ(struct list_head* head) {  
     return list_empty(head);
 }
 /** aggiunge un nodo alla coda nella posizione corretta: prio da max a min
