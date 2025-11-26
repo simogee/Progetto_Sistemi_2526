@@ -1,4 +1,5 @@
 #include "./headers/pcb.h"
+#include <uriscv/const.h>
 
 
 /** Si dichiara questo per poter utilizzare klog_print*/
@@ -6,7 +7,7 @@ extern void klog_print(char *str);
 
 
 static struct list_head pcbFree_h; //sentinella -> inizio lista
-static pcb_t pcbFree_table[MAXPROC]; // array contenente i processi 
+static pcb_t pcbFree_table[MAXPROC]; // array contenente i processi
 static int next_pid = 1;
 
 /**
@@ -22,7 +23,7 @@ void initPcbs() {
        pcbFree_table[i].p_pid = next_pid;
        next_pid++;
     }
- 
+
 }
  /** Funzione breakpoint */
 void bp(){
@@ -32,7 +33,7 @@ void bp(){
 void freePcb(pcb_t* p) {
     list_add(&p->p_list,&pcbFree_h);
 }
-/**Questa funzione viene usata quando utilizziamo un pcb libero: lo inizializzamo a 0 
+/**Questa funzione viene usata quando utilizziamo un pcb libero: lo inizializzamo a 0
  * per cancellare ogni traccia del suo utilizzo precedente e lo restituiamo pulito.
  */
 pcb_t* allocPcb() {
@@ -43,7 +44,7 @@ pcb_t* allocPcb() {
 
     //-- Inizializzo l'elemento rimosso --
     INIT_LIST_HEAD(&elem->p_list);
-    elem->p_parent        = NULL;    
+    elem->p_parent        = NULL;
     INIT_LIST_HEAD(&elem->p_child);
     INIT_LIST_HEAD(&elem->p_sib);
     elem->p_s.entry_hi = 0;
@@ -53,15 +54,15 @@ pcb_t* allocPcb() {
     elem->p_s.mie      = 0;
     for (int i = 0; i < STATE_GPR_LEN; ++i) {
         elem->p_s.gpr[i] = 0;
-    } 
+    }
     elem->p_time          = 0;
     elem->p_semAdd        = NULL;
     elem->p_supportStruct = NULL;
     elem->p_prio          = 0;
-    elem->p_pid           = next_pid++; 
-    
+    elem->p_pid           = next_pid++;
+ 
 
-    return elem; 
+    return elem;
 }
 /** Elenco funzioni utilizzate:
  * INIT_LIST_HEAD(&testa_lista) => inizializza un valore già dichiarato di testa lista
@@ -75,7 +76,7 @@ void mkEmptyProcQ(struct list_head* head) {
     INIT_LIST_HEAD(head);
 }
 /**Controlla se la coda è vuota */
-int emptyProcQ(struct list_head* head) {  
+int emptyProcQ(struct list_head* head) {
     return list_empty(head);
 }
 /** aggiunge un nodo alla coda nella posizione corretta: prio da max a min
@@ -98,27 +99,25 @@ void insertProcQ(struct list_head* head, pcb_t* p) {
             }
             else if(list_is_last(iter,head))
             {
-                list_add_tail(&p->p_list,head); 
-                return;  
+                list_add_tail(&p->p_list,head);
+                return;
             }
         }
-        
     }
-      
 }
-/**ritorna un puntatore alla testa della coda 
+/**ritorna un puntatore alla testa della coda
  * Head è sempre il valore sentinella.
 */
 pcb_t* headProcQ(struct list_head* head) {
 
-    if(list_empty(head)) 
+    if(list_empty(head))
         return NULL;
-  
+
     struct list_head* firstNode = list_next(head);
-    
+
     return container_of(firstNode,pcb_t,p_list);
 
-    
+
 }
 /** rimuove il primo pcb dalla coda, se coda vuota ritorna NULL */
 pcb_t* removeProcQ(struct list_head* head) {
@@ -153,14 +152,24 @@ pcb_t* outProcQ(struct list_head* head, pcb_t* p) {
 
 /** emptychild ritorna TRUE se il pcb puntato non ha figli */
 int emptyChild(pcb_t* p) {
-
+  //return &p->p_child == NULL;
+  return list_empty(&p->p_child);
 }
 /**Rende il pcb p figlio del pcb prnt */
 void insertChild(pcb_t* prnt, pcb_t* p) {
+  list_add(&p->p_sib, &prnt->p_child);
+
 }
 /** rimuove il primo figlio del pcb p. Ritorna null se non ci sono figli, pcb altrimenti */
 pcb_t* removeChild(pcb_t* p) {
 }
 /** Rimuove il link tra pcb p e il suo genitore. Se p non ha parenti ritorna null altrimenti p */
 pcb_t* outChild(pcb_t* p) {
+  pcb_t* parent = p->p_parent;
+  if(parent == NULL){
+    return NULL;
+  }
+  p->p_sib.prev = p->p_sib.next;
+  p->p_parent = NULL;
+  return p;
 }
