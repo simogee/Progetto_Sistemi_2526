@@ -60,7 +60,7 @@ pcb_t* allocPcb() {
     elem->p_supportStruct = NULL;
     elem->p_prio          = 0;
     elem->p_pid           = next_pid++;
- 
+
 
     return elem;
 }
@@ -127,22 +127,22 @@ pcb_t* removeProcQ(struct list_head* head) {
     pcb_t * nodo =container_of(firstNode,pcb_t,p_list);
     __list_del(head,nodo->p_list.next);
     return nodo;
-  
+
 
 }
 /** rimuove il pcb puntato da p. Se esiste lo rimuove e ritorna il pcb altrimenti ritorna NULL */
 pcb_t* outProcQ(struct list_head* head, pcb_t* p) {
-    
+
     if(list_empty(head)) // controlliamo subito che la lista non sia vuota(superfluo)
         return NULL;
     struct list_head* iter = list_next(head); //inizializziamo iter alla testa della lista
-    list_for_each(iter,head){ 
+    list_for_each(iter,head){
         pcb_t* qpcb = container_of(iter,pcb_t, p_list);
         if(qpcb->p_pid == p->p_pid ){
             list_del(iter);
             return p;
         }
-        
+
     }
     return NULL;
 }
@@ -152,24 +152,32 @@ pcb_t* outProcQ(struct list_head* head, pcb_t* p) {
 
 /** emptychild ritorna TRUE se il pcb puntato non ha figli */
 int emptyChild(pcb_t* p) {
-  //return &p->p_child == NULL;
   return list_empty(&p->p_child);
 }
 /**Rende il pcb p figlio del pcb prnt */
 void insertChild(pcb_t* prnt, pcb_t* p) {
+  // aggiungo alla lista dei figli di prnt il p_sib (che e' p)
   list_add(&p->p_sib, &prnt->p_child);
+  p->p_parent = prnt;
 
 }
 /** rimuove il primo figlio del pcb p. Ritorna null se non ci sono figli, pcb altrimenti */
 pcb_t* removeChild(pcb_t* p) {
-}
-/** Rimuove il link tra pcb p e il suo genitore. Se p non ha parenti ritorna null altrimenti p */
-pcb_t* outChild(pcb_t* p) {
-  pcb_t* parent = p->p_parent;
-  if(parent == NULL){
+  if (list_empty(&p->p_child)){
     return NULL;
   }
-  p->p_sib.prev = p->p_sib.next;
-  p->p_parent = NULL;
+  list_del(p->p_child.next); // p_child e' la sentinella (tipo head)
   return p;
+}
+/** Rimuove il link tra pcb  e il suo genitore. Se p non ha parenti ritorna null altrimenti p */
+pcb_t* outChild(pcb_t* p) {
+  if (p->p_parent == NULL) {
+        return NULL;    // non è figlio di nessuno
+    }
+    // Rimuovi p dalla lista dei figli del padre
+    list_del(&p->p_sib);
+    // Segnala che non ha più un padre
+    p->p_parent = NULL;
+
+    return p;
 }
