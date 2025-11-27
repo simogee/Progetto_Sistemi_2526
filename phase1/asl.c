@@ -26,10 +26,11 @@ void initASL() {
  */
 int insertBlocked(int* semAdd, pcb_t* p) {
 
+    
         struct list_head *iter;
         list_for_each(iter,semd_h){
-            semd_t *sem = container_of(iter,semd_t,s_link);
-            if ( sem == semAdd)
+            semd_t *sem = container_of(iter,semd_t,s_link); //boh, forse?
+            if (&sem->s_key == semAdd)  //devo controllare il valore dell'indirizzo key se coincide con semAdd
                 {
                     list_add(..,sem->s_procq);
                     //return qualcosa;
