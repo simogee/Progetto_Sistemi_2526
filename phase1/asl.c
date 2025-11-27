@@ -11,6 +11,12 @@ static struct list_head semd_h;     // lista di semafori attivi
 
 //inizializza semdFree_h con MAXPROC. analoga a quella delle queue.
 void initASL() {
+    INIT_LIST_HEAD(&semdFree_h);
+    for(int i = 0; i < MAXPROC;i++)
+    {
+       list_add(&semd_table[i].s_link,&semdFree_h);
+    }
+
 }
 
 /**aggiunge in coda al semaforo associato alla key semAdd. 
