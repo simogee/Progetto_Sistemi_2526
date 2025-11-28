@@ -2,7 +2,7 @@
 #include <uriscv/const.h>
 
 
-/** Si dichiara questo per poter utilizzare klog_print*/
+/** Si dichiara questo per poter utilizzare klog_print */
 extern void klog_print(char *str);
 
 
