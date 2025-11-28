@@ -92,7 +92,8 @@ int insertBlocked(int* semAdd, pcb_t* p) {
 
 /** ricerca corrispondenza key, se non c'è NULL
  * altrimenti rimuovi primo nodo di s_procq associato a semAdd  e ritorna il puntatore al processo.
- * Se la coda diventa vuota allora rimuovi il semaforo da s_link*/
+ * Se la coda diventa vuota allora rimuovi il semaforo da s_link:
+ *      list_del dalla lista semd_h e list_add da semdFree_h*/
 pcb_t* removeBlocked(int* semAdd) {
 }
 
