@@ -9,6 +9,8 @@ static semd_t semd_table[MAXPROC];  // array di semafori
 static struct list_head semdFree_h; // lista di semafori non ancora utilizzati
 static struct list_head semd_h;     // lista di semafori attivi
 
+
+void mkEmptyProcQ(struct list_head* head);
 //inizializza semdFree_h con MAXPROC. analoga a quella delle queue.
 void initASL() {
     INIT_LIST_HEAD(&semdFree_h);
@@ -21,26 +23,39 @@ void initASL() {
 
 /**aggiunge in coda al semaforo associato alla key semAdd. 
  * Se non c'è corrispondenza nella lista semd_h si inizializza un nuovo semaforo con key semAdd.
- * idea: individuo la coda associata al valore semAdd. e faccio s_procq.prev per andare in coda aggiungendo l'ultimo elemento
- * saltando così tutta la coda -> non sicuro: dipende cosa considerano come testa e cosa come coda.
+ *
  */
 int insertBlocked(int* semAdd, pcb_t* p) {
 
     
         struct list_head *iter;
-        list_for_each(iter,semd_h){
+        list_for_each(iter,&semd_h){
             semd_t *sem = container_of(iter,semd_t,s_link); //boh, forse?
-            if (&sem->s_key == semAdd)  //devo controllare il valore dell'indirizzo key se coincide con semAdd
+            if(sem->s_key == semAdd )
+            {
+                list_add_tail(&p->p_list,&sem->s_procq);
+                p->p_semAdd = semAdd;
+                return 0;
+            }
+            /** non ha trovato la corrispondenza */
+            else if (sem->s_key < semAdd)
+            {
+                /*controllo se effettivamente abbiamo semafori liberi da allocare */
+                if(!list_empty(&semdFree_h))
                 {
-                    list_add(..,sem->s_procq);
-                    //return qualcosa;
+                    semd_t new_sem;
+                    new_sem.s_key = semAdd;
+                    mkEmptyProcQ(&new_sem.s_procq);
+                    list_add(&p->p_list,&new_sem.s_procq);
+                    p->p_semAdd = semAdd; //forse ridondante ma per sicurezza
+                    list_add(sem->s_link.prev,&new_sem.s_link);
+                    return 0;
                 }
+            }
+            
         }
-        /**non ha trovato corrispondenza e va inizializzato il semaforo con la sua key associata
-         * 
-        */
-
     
+    return 1;
 
 }
 
