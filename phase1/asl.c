@@ -11,9 +11,14 @@ static struct list_head semd_h;     // lista di semafori attivi
 
 
 void mkEmptyProcQ(struct list_head* head);
+void klog_print(char *str);
+static void bp_sem(){};
+
+
 //inizializza semdFree_h con MAXPROC. analoga a quella delle queue.
 void initASL() {
     INIT_LIST_HEAD(&semdFree_h);
+    INIT_LIST_HEAD(&semd_h);
     for(int i = 0; i < MAXPROC;i++)
     {
        list_add(&semd_table[i].s_link,&semdFree_h);
@@ -28,32 +33,58 @@ void initASL() {
 int insertBlocked(int* semAdd, pcb_t* p) {
 
     
+    
         struct list_head *iter;
         list_for_each(iter,&semd_h){
-            semd_t *sem = container_of(iter,semd_t,s_link); //boh, forse?
+            semd_t *sem = container_of(iter,semd_t,s_link); 
             if(sem->s_key == semAdd )
             {
                 list_add_tail(&p->p_list,&sem->s_procq);
                 p->p_semAdd = semAdd;
                 return 0;
             }
-            /** non ha trovato la corrispondenza */
-            else if (sem->s_key < semAdd)
+            /** non ha trovato la corrispondenza e i semd_h è ordinata in ordine crescente(seguendo le istruzioni di pandOS) */
+            else if (sem->s_key > semAdd)
             {
                 /*controllo se effettivamente abbiamo semafori liberi da allocare */
                 if(!list_empty(&semdFree_h))
                 {
-                    semd_t new_sem;
-                    new_sem.s_key = semAdd;
-                    mkEmptyProcQ(&new_sem.s_procq);
-                    list_add(&p->p_list,&new_sem.s_procq);
+                    //devo estrarre un nuovo semd da semdFree_h
+                    semd_t* new_sem = container_of(semdFree_h.next,semd_t,s_link);
+                    list_del(&new_sem->s_link);
+                    //inizializzo il nuovo semaforo attivato
+                    new_sem->s_key = semAdd;
+                    list_add(&new_sem->s_link,sem->s_link.prev); //aggiungo alla lista dei sem Attivi
+                    mkEmptyProcQ(&new_sem->s_procq);
+
+                    list_add_tail(&p->p_list,&new_sem->s_procq); //aggiungo in coda il pcb alla lista dei processi associati al semaforo
                     p->p_semAdd = semAdd; //forse ridondante ma per sicurezza
-                    list_add(sem->s_link.prev,&new_sem.s_link);
+            
                     return 0;
                 }
             }
             
         }
+
+
+        /*non ha trovato nella lista dove inserire il valore:
+         o lista è vuota o è ultimo elemento*/
+
+        if(!list_empty(&semdFree_h))
+             {
+                 //devo estrarre un nuovo semd da semdFree_h
+                 semd_t* new_sem = container_of(semdFree_h.next,semd_t,s_link);
+                 list_del(&new_sem->s_link);
+                 //inizializzo il nuovo semaforo attivato
+                 new_sem->s_key = semAdd;
+                 list_add_tail(&new_sem->s_link,&semd_h);
+                 mkEmptyProcQ(&new_sem->s_procq);
+                 list_add_tail(&p->p_list,&new_sem->s_procq);
+                 p->p_semAdd = semAdd; //forse ridondante ma per sicurezza
+        
+                 return 0;
+             }
+
     
     return 1;
 
