@@ -98,12 +98,12 @@ pcb_t* removeBlocked(int* semAdd) {
   list_for_each(iter, &semd_h){
   semd_t *sem = container_of(iter,semd_t,s_link);
     if(sem->s_key == semAdd){
-          pcb_t* pcb = container_of(&sem->s_procq, pcb_t, p_list );
+        pcb_t* pcb = container_of(sem->s_procq.next, pcb_t, p_list );
         list_del(&sem->s_procq);
         if(list_empty(&sem->s_procq)){
           sem->s_key =  NULL;
+          list_del(&sem->s_link);
           list_add(&sem->s_link,&semdFree_h);
-          list_del(iter);
         }
         return pcb;
     }
@@ -118,9 +118,41 @@ pcb_t* removeBlocked(int* semAdd) {
  * Se non c'è ritorna NULL altrimenti p
  */
 pcb_t* outBlocked(pcb_t* p) {
+  struct list_head *iter;
+  list_for_each(iter, &semd_h){
+    semd_t *sem = container_of(iter,semd_t,s_link);
+    if (sem->s_key == p->p_semAdd){
+      struct list_head *iter2;
+      if (list_empty(&sem->s_procq)){
+        return NULL;
+      }
+      list_for_each(iter2, &sem->s_procq){
+        pcb_t *pcb = container_of(iter2, pcb_t, p_list);
+        if(pcb->p_pid == p->p_pid){
+          list_del(iter2);
+          return p;
+        }
+      }
+
+    }
+
+  }
+  return NULL;
 }
 /**
- * Ritorna un puntatore alla testa del semaforo associato alla key semAdd. Se non trova ritorna null.
+ * Ritorna un puntatore al pcb che e' alla testa del semaforo(s_procq) associato alla key semAdd. Se non trova ritorna null.
  */
 pcb_t* headBlocked(int* semAdd) {
+  struct list_head *iter;
+  list_for_each(iter, &semd_h){
+    semd_t *sem = container_of(iter,semd_t,s_link);
+
+    if(sem->s_key == semAdd){
+      if(list_empty(&sem->s_procq)){
+        return NULL;
+      }
+      return container_of(sem->s_procq.next, pcb_t, p_list );
+    }
+  }
+  return NULL;
 }
