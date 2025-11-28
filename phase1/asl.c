@@ -28,7 +28,6 @@ void initASL() {
 
 /**aggiunge in coda al semaforo associato alla key semAdd. 
  * Se non c'è corrispondenza nella lista semd_h si inizializza un nuovo semaforo con key semAdd.
- *
  */
 int insertBlocked(int* semAdd, pcb_t* p) {
 
