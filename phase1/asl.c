@@ -98,14 +98,14 @@ pcb_t* removeBlocked(int* semAdd) {
   list_for_each(iter, &semd_h){
   semd_t *sem = container_of(iter,semd_t,s_link);
     if(sem->s_key == semAdd){
+          pcb_t* pcb = container_of(&sem->s_procq, pcb_t, p_list );
         list_del(&sem->s_procq);
         if(list_empty(&sem->s_procq)){
           sem->s_key =  NULL;
           list_add(&sem->s_link,&semdFree_h);
-          list_del(&sem->s_link);
-
+          list_del(iter);
         }
-        return container_of(&sem->s_procq, pcb_t,p_list);
+        return pcb;
     }
   }
   return NULL;
