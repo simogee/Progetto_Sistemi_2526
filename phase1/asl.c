@@ -5,7 +5,7 @@
  *        => s_link è la lista di semafori attivi -> Kernel li utilizza per gestione(lista esterna)
  * Avremo una lista semd_h di semafori attivi e riconoscibili con la propria key definita da semAdd.
  */
-static semd_t semd_table[MAXPROC];  // array di semafori 
+static semd_t semd_table[MAXPROC];  // array di semafori
 static struct list_head semdFree_h; // lista di semafori non ancora utilizzati
 static struct list_head semd_h;     // lista di semafori attivi
 
@@ -26,17 +26,17 @@ void initASL() {
 
 }
 
-/**aggiunge in coda al semaforo associato alla key semAdd. 
+/**aggiunge in coda al semaforo associato alla key semAdd.
  * Se non c'è corrispondenza nella lista semd_h si inizializza un nuovo semaforo con key semAdd.
  *
  */
 int insertBlocked(int* semAdd, pcb_t* p) {
 
-    
-    
+
+
         struct list_head *iter;
         list_for_each(iter,&semd_h){
-            semd_t *sem = container_of(iter,semd_t,s_link); 
+            semd_t *sem = container_of(iter,semd_t,s_link);
             if(sem->s_key == semAdd )
             {
                 list_add_tail(&p->p_list,&sem->s_procq);
@@ -59,11 +59,11 @@ int insertBlocked(int* semAdd, pcb_t* p) {
 
                     list_add_tail(&p->p_list,&new_sem->s_procq); //aggiungo in coda il pcb alla lista dei processi associati al semaforo
                     p->p_semAdd = semAdd; //forse ridondante ma per sicurezza
-            
+
                     return 0;
                 }
             }
-            
+
         }
 
 
@@ -81,11 +81,11 @@ int insertBlocked(int* semAdd, pcb_t* p) {
                  mkEmptyProcQ(&new_sem->s_procq);
                  list_add_tail(&p->p_list,&new_sem->s_procq);
                  p->p_semAdd = semAdd; //forse ridondante ma per sicurezza
-        
+
                  return 0;
              }
 
-    
+
     return 1;
 
 }
@@ -95,11 +95,26 @@ int insertBlocked(int* semAdd, pcb_t* p) {
  * Se la coda diventa vuota allora rimuovi il semaforo da s_link:
  *      list_del dalla lista semd_h e list_add da semdFree_h*/
 pcb_t* removeBlocked(int* semAdd) {
+  struct list_head *iter;
+  list_for_each(iter, &semd_h){
+  semd_t *sem = container_of(iter,semd_t,s_link);
+    if(sem->s_key == semAdd){
+        list_del(&sem->s_procq);
+        if(list_empty(&sem->s_procq)){
+          sem->s_key =  NULL;
+          list_add(&sem->s_link,&semdFree_h);
+          list_del(&sem->s_link);
+
+        }
+        return container_of(&sem->s_procq, pcb_t,p_list);
+    }
+  }
+  return NULL;
 }
 
 
 /**
- * Questa non mi è chiara: perchè dovrei voler rimuovere dalla coda di un semaforo un processo preciso?
+ * Questa non mi è chiara: perchè ovrei voler rimuovere dalla coda di un semaforo un processo preciso?
  * Trovo processo sulla coda definita da p(contiene riferimento al suo semaforo) e lo rimuove.
  * Se non c'è ritorna NULL altrimenti p
  */
